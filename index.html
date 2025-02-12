@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>動物早押しゲーム</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    #game-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    #question {
+      font-size: 2em;
+      margin: 20px 0;
+    }
+    #buttons button {
+      font-size: 2em;
+      margin: 5px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    #controls button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <h1>動物早押しゲーム</h1>
+    <div id="timer">Time: 0.00 s</div>
+    <div id="score">Score: 0</div>
+    <div id="question"></div>
+    <div id="buttons"></div>
+    <!-- 動物ボタンから改行4つ分下に配置 -->
+    <div id="controls">
+      <br><br><br><br>
+      <button id="start-btn">スタート</button>
+      <button id="restart-btn" disabled>リスタート</button>
+    </div>
+  </div>
+
+  <script>
+    // 動物の読み仮名の候補
+    const animalReadings = [
+      "いぬ", "犬", 
+      "ねこ", "ネコ", "猫", 
+      "うさぎ", "ウサギ", "兎", 
+      "ゾウ", 
+      "ライオン", "獅子", 
+      "きつね", 
+      "キリン", 
+      "しまうま", 
+      "サル"
+    ];
+    
+    // 各読み仮名がどの動物かのマッピング
+    const readingToAnimal = {
+      "いぬ": "dog",
+      "犬": "dog",
+      "ねこ": "cat",
+      "ネコ": "cat",
+      "猫": "cat",
+      "うさぎ": "rabbit",
+      "ウサギ": "rabbit",
+      "兎": "rabbit",
+      "ゾウ": "elephant",
+      "ライオン": "lion",
+      "獅子": "lion",
+      "きつね": "fox",
+      "キリン": "giraffe",
+      "しまうま": "zebra",
+      "サル": "monkey"
+    };
+
+    // 正解とするアイコン（※「キリン」については、ここでは代用として🐼を使用）
+    const animalMapping = {
+      dog: "🐕",
+      cat: "🐈",
+      rabbit: "🐇",
+      elephant: "🐘",
+      lion: "🦁",
+      fox: "🦊",
+      giraffe: "🐼",
+      zebra: "🦓",
+      monkey: "🐒"
+    };
+
+    // 使用する全10種のアイコン（正解に出るもの以外のデコイも含む）
+    const icons = ["🐕", "🐈", "🐇", "🐘", "🦁", "🦊", "🦓", "🐒", "🐼", "🐷"];
+
+    let currentRound = 0;
+    let score = 0;
+    let startTime = null;
+    let timerInterval = null;
+
+    // タイマー表示の更新
+    function updateTimer() {
+      const now = new Date();
+      const elapsed = (now - startTime) / 1000;
+      document.getElementById("timer").innerText = "Time: " + elapsed.toFixed(2) + " s";
+    }
+
+    // 配列シャッフル（Fisher–Yatesアルゴリズム）
+    function shuffleArray(array) {
+      const arr = array.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // 次の問題へ進む
+    function nextQuestion() {
+      if (currentRound >= 10) {
+        endGame();
+        return;
+      }
+      currentRound++;
+      // ランダムな読み仮名を選択
+      const randomIndex = Math.floor(Math.random() * animalReadings.length);
+      const reading = animalReadings[randomIndex];
+      document.getElementById("question").innerText = reading;
+
+      // 正解アイコンの決定
+      const animalKey = readingToAnimal[reading];
+      const correctIcon = animalMapping[animalKey];
+
+      // 正解アイコン以外からランダムに4つのデコイを選択
+      let decoyIcons = icons.filter(icon => icon !== correctIcon);
+      decoyIcons = shuffleArray(decoyIcons).slice(0, 4);
+      // 正解とデコイを合体してシャッフル
+      let options = shuffleArray(decoyIcons.concat([correctIcon]));
+
+      // ボタン群の描画
+      const buttonsDiv = document.getElementById("buttons");
+      buttonsDiv.innerHTML = "";
+      options.forEach(icon => {
+        const button = document.createElement("button");
+        button.innerText = icon;
+        button.addEventListener("click", function() {
+          if (icon === correctIcon) {
+            score += 10;
+          } else {
+            score -= 5;
+          }
+          document.getElementById("score").innerText = "Score: " + score;
+          nextQuestion();
+        });
+        buttonsDiv.appendChild(button);
+      });
+    }
+
+    // ゲーム開始
+    function startGame() {
+      currentRound = 0;
+      score = 0;
+      document.getElementById("score").innerText = "Score: " + score;
+      startTime = new Date();
+      document.getElementById("timer").innerText = "Time: 0.00 s";
+      timerInterval = setInterval(updateTimer, 10);
+      document.getElementById("start-btn").disabled = true;
+      document.getElementById("restart-btn").disabled = true;
+      nextQuestion();
+    }
+
+    // ゲーム終了処理
+    function endGame() {
+      clearInterval(timerInterval);
+      document.getElementById("question").innerText = "ゲーム終了！ 最終スコア: " + score;
+      document.getElementById("buttons").innerHTML = "";
+      document.getElementById("restart-btn").disabled = false;
+    }
+
+    // ゲームリセット
+    function restartGame() {
+      document.getElementById("start-btn").disabled = false;
+      document.getElementById("timer").innerText = "Time: 0.00 s";
+      document.getElementById("score").innerText = "Score: 0";
+      document.getElementById("question").innerText = "";
+    }
+
+    // イベントリスナーの登録
+    document.getElementById("start-btn").addEventListener("click", startGame);
+    document.getElementById("restart-btn").addEventListener("click", restartGame);
+  </script>
+</body>
+</html>
