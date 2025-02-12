@@ -23,10 +23,11 @@
       font-size: 2em;
       margin: 20px 0;
     }
+    /* ボタンの高さとアイコンの大きさを倍に */
     #buttons button {
-      font-size: 2em;
+      font-size: 4em;         /* アイコンサイズを倍に */
       margin: 5px;
-      padding: 10px 20px;
+      padding: 20px 40px;      /* ボタンの高さも倍に */
       cursor: pointer;
     }
     #controls button {
@@ -177,10 +178,12 @@
       nextQuestion();
     }
 
-    // ゲーム終了処理
+    // ゲーム終了処理（最終スコア＝score×score÷time）
     function endGame() {
       clearInterval(timerInterval);
-      document.getElementById("question").innerText = "ゲーム終了！ 最終スコア: " + score;
+      const elapsed = (new Date() - startTime) / 1000; // 経過時間（秒）
+      const finalScore = (score * score) / elapsed;
+      document.getElementById("question").innerText = "ゲーム終了！ 最終スコア: " + finalScore.toFixed(2);
       document.getElementById("buttons").innerHTML = "";
       document.getElementById("restart-btn").disabled = false;
     }
